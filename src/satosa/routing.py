@@ -71,7 +71,9 @@ class ModuleRouter(object):
         logger.debug("Loaded micro services with endpoints: %s" % micro_services)
         self.config = config
         self.timer = {}
-        Timer(1, self._cleanup).start()
+        self.timeout = self.config['LOGGING'].get('fail_timeout',60)
+        if self.timeout > 0:
+            Timer(1, self._cleanup).start()
 
     def _cleanup(self):
         while True:
@@ -95,10 +97,10 @@ class ModuleRouter(object):
         satosa_logging(logger, logging.DEBUG, "Routing to backend: %s " % context.target_backend, context.state)
         backend = self.backends[context.target_backend]["instance"]
         context.state[STATE_KEY] = context.target_frontend
-        timeout = self.config['LOGGING'].get('fail_timeout',60)
-        self.timer[context.state['SESSION_ID']] = Timer(timeout, lambda: satosa_logging(logger, logging.DEBUG, "Timeout timer", context.state))
-        self.timer[context.state['SESSION_ID']].start()
-        satosa_logging(logger, logging.DEBUG, "Started timer (%s)" % timeout, context.state)
+        if self.timeout > 0:
+            self.timer[context.state['SESSION_ID']] = Timer(self.timeout, lambda: satosa_logging(logger, logging.DEBUG, "Timeout timer", context.state))
+            self.timer[context.state['SESSION_ID']].start()
+            satosa_logging(logger, logging.DEBUG, "Started timer (%s)" % self.timeout, context.state)
         return backend
 
     def frontend_routing(self, context):
