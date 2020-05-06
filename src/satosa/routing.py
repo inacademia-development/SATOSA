@@ -71,7 +71,7 @@ class ModuleRouter(object):
         logger.debug("Loaded micro services with endpoints: %s" % micro_services)
         self.config = config
         self.timer = {}
-        self.timeout = self.config['LOGGING'].get('fail_timeout',60)
+        self.timeout = self.config['LOGGING'].get('fail_timeout',0)
         if self.timeout > 0:
             Timer(1, self._cleanup).start()
 
