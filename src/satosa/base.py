@@ -70,7 +70,7 @@ class SATOSABase(object):
             self._link_micro_services(self.response_micro_services, self._auth_resp_finish)
 
         self.module_router = ModuleRouter(frontends, backends,
-                                          self.request_micro_services + self.response_micro_services, config)
+                                          self.request_micro_services + self.response_micro_services)
 
     def _link_micro_services(self, micro_services, finisher):
         if not micro_services:
