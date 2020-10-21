@@ -3,12 +3,10 @@ Holds satosa routing logic
 """
 import logging
 import re
-import time
 
 from .context import SATOSABadContextError
 from .exception import SATOSAError
 from .logging_util import satosa_logging
-from threading import Timer
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,7 @@ class ModuleRouter(object):
     and handles the internal routing between frontends and backends.
     """
 
-    def __init__(self, frontends, backends, micro_services, config):
+    def __init__(self, frontends, backends, micro_services):
         """
         :type frontends: dict[str, satosa.frontends.base.FrontendModule]
         :type backends: dict[str, satosa.backends.base.BackendModule]
@@ -69,20 +67,6 @@ class ModuleRouter(object):
         logger.debug("Loaded backends with endpoints: %s" % backends)
         logger.debug("Loaded frontends with endpoints: %s" % frontends)
         logger.debug("Loaded micro services with endpoints: %s" % micro_services)
-        self.config = config
-        self.timer = {}
-        self.timeout = self.config['LOGGING'].get('fail_timeout',0)
-        if self.timeout > 0:
-            Timer(1, self._cleanup).start()
-
-    def _cleanup(self):
-        while True:
-            #logger.debug("Timout cleanup thread")
-            for k, v in list(self.timer.items()):
-                if not v.is_alive():
-                    del self.timer[k]
-                    logger.debug("Cleanup timer %s" % k)
-            time.sleep(1)
 
     def backend_routing(self, context):
         """
@@ -97,10 +81,6 @@ class ModuleRouter(object):
         satosa_logging(logger, logging.DEBUG, "Routing to backend: %s " % context.target_backend, context.state)
         backend = self.backends[context.target_backend]["instance"]
         context.state[STATE_KEY] = context.target_frontend
-        if self.timeout > 0:
-            self.timer[context.state['SESSION_ID']] = Timer(self.timeout, lambda: satosa_logging(logger, logging.DEBUG, "Timeout timer", context.state))
-            self.timer[context.state['SESSION_ID']].start()
-            satosa_logging(logger, logging.DEBUG, "Started timer (%s)" % self.timeout, context.state)
         return backend
 
     def frontend_routing(self, context):
@@ -118,10 +98,6 @@ class ModuleRouter(object):
         satosa_logging(logger, logging.DEBUG, "Routing to frontend: %s " % target_frontend, context.state)
         context.target_frontend = target_frontend
         frontend = self.frontends[context.target_frontend]["instance"]
-        timer = self.timer.get(context.state['SESSION_ID'])
-        if timer:
-            timer.cancel()
-            satosa_logging(logger, logging.DEBUG, "Stopped timer", context.state)
         return frontend
 
     def _find_registered_endpoint_for_module(self, module, context):
