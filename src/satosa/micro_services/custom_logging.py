@@ -75,7 +75,7 @@ class CustomLoggingService(ResponseMicroService):
             log = {}
             log['router'] = context.state.state_dict['ROUTER']
             log['samltime'] = data.auth_info.timestamp
-            log['timestamp'] = datetime.now().isoformat()
+            log['timestamp'] = datetime.utcnow().isoformat()
             log['sessionid'] = context.state.state_dict['SESSION_ID']
             log['idp'] = idpEntityID
             log['sp'] = spEntityID
