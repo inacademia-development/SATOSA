@@ -222,7 +222,7 @@ class SATOSABase(object):
                                                                 state=json.dumps(
                                                                     error.state.state_dict,
                                                                     indent=4))
-            satosa_logging(logger, logging.ERROR, msg, error.state, exc_info=True)
+            satosa_logging(logger, logging.INFO, msg, error.state)
             return self._handle_satosa_authentication_error(error)
 
     def _load_state(self, context):
